@@ -1,0 +1,59 @@
+# Local development stack. Credentials here are throwaway, for this database only.
+# Auth and Storage still need a Supabase project; see the README.
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: recall
+    ports:
+      - "54322:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      # Applied once, when the volume is first created. After adding a migration,
+      # run `docker compose down -v` to rebuild the database from scratch.
+      - ./supabase/local/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh:ro
+      - ./supabase:/supabase:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d recall"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build: ./apps/api
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/recall
+      CORS_ORIGINS: http://localhost:3000
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./apps/api/app:/app/app:ro
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    image: node:24-slim
+    working_dir: /repo
+    # Named volumes keep Linux dependencies apart from any installed on the host.
+    command: sh -c "npm ci && npm run dev --workspace=apps/web -- --hostname 0.0.0.0"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/repo
+      - web-root-modules:/repo/node_modules
+      - web-app-modules:/repo/apps/web/node_modules
+      - web-next-cache:/repo/apps/web/.next
+    depends_on:
+      - api
+
+volumes:
+  db-data:
+  web-root-modules:
+  web-app-modules:
+  web-next-cache:

@@ -1,0 +1,24 @@
+{
+  "name": "recall",
+  "private": true,
+  "description": "Your AI memory and action layer for everything you save.",
+  "license": "MIT",
+  "workspaces": [
+    "apps/web"
+  ],
+  "engines": {
+    "node": ">=20.9"
+  },
+  "scripts": {
+    "dev:web": "npm run dev --workspace=apps/web",
+    "lint:web": "npm run lint --workspace=apps/web",
+    "typecheck:web": "npm run typecheck --workspace=apps/web",
+    "test:web": "npm run test --workspace=apps/web",
+    "build:web": "npm run build --workspace=apps/web",
+    "test:db": "node --test \"supabase/tests/*.test.mjs\""
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.15",
+    "@electric-sql/pglite-pgvector": "^0.0.16"
+  }
+}
