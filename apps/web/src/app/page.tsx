@@ -1,21 +1,41 @@
-import { ThemeToggle } from "@/components/theme-toggle";
+import { Faq } from "@/components/landing/faq";
+import { FeatureGrid } from "@/components/landing/feature-grid";
+import { FinalCta, Footer } from "@/components/landing/footer";
+import { Hero } from "@/components/landing/hero";
+import { HowItWorks } from "@/components/landing/how-it-works";
+import { MotionProvider } from "@/components/landing/motion-provider";
+import { Navbar } from "@/components/landing/navbar";
+import { Pricing } from "@/components/landing/pricing";
+import { ProblemStrip } from "@/components/landing/problem-strip";
+import { SaveToAction } from "@/components/landing/save-to-action";
+import { SmartCardShowcase } from "@/components/landing/smart-card-showcase";
+import { UnderTheHood } from "@/components/landing/under-the-hood";
+import { UseCases } from "@/components/landing/use-cases";
 
-/** Temporary home page. Phase 0.5 replaces it with the full landing page. */
-export default function Home() {
+export default function LandingPage() {
   return (
-    <div className="flex flex-1 flex-col">
-      <header className="flex items-center justify-between px-6 py-4">
-        <span className="text-lg font-semibold tracking-tight">Recall</span>
-        <ThemeToggle />
-      </header>
-      <main className="flex flex-1 flex-col items-center justify-center gap-4 px-6 pb-24 text-center">
-        <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
-          Stop saving. <span className="text-primary">Start doing.</span>
-        </h1>
-        <p className="max-w-md text-muted-foreground">
-          Your AI memory and action layer for everything you save.
-        </p>
+    <MotionProvider>
+      <a
+        href="#main"
+        className="sr-only z-[60] rounded-lg bg-background px-3 py-2 focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
+      >
+        Skip to content
+      </a>
+      <Navbar />
+      <main id="main">
+        <Hero />
+        <ProblemStrip />
+        <HowItWorks />
+        <SaveToAction />
+        <SmartCardShowcase />
+        <UseCases />
+        <FeatureGrid />
+        <UnderTheHood />
+        <Pricing />
+        <Faq />
+        <FinalCta />
       </main>
-    </div>
+      <Footer />
+    </MotionProvider>
   );
 }

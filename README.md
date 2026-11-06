@@ -46,7 +46,7 @@ Run lint, type checks and all tests with:
 make check
 ```
 
-Configuration lives in environment variables; see [.env.example](.env.example).
+Configuration lives in environment variables; see [.env.example](.env.example). To deploy, follow [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ## Repository layout
 

@@ -134,3 +134,90 @@
     @apply font-sans;
   }
 }
+
+/*
+ * Motion. Everything here is CSS, so it costs no JavaScript and content stays
+ * visible without it. Base styles are always the finished state: browsers without
+ * scroll-driven animations, and people who prefer reduced motion, just see that.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  @supports (animation-timeline: view()) {
+    .reveal {
+      animation: reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 30%;
+    }
+  }
+
+  .rise {
+    animation: rise 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    animation-delay: var(--rise-delay, 0ms);
+  }
+
+  /* Looping mini-UIs in "How it works": items appear in turn, hold, then reset. */
+  .loop-1 {
+    animation: loop-1 7s ease infinite;
+  }
+  .loop-2 {
+    animation: loop-2 7s ease infinite;
+  }
+  .loop-3 {
+    animation: loop-3 7s ease infinite;
+  }
+  .loop-type {
+    animation: loop-type 7s steps(28) infinite;
+  }
+}
+
+html {
+  scroll-padding-top: 5rem;
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes loop-1 {
+  0%, 10% { opacity: 0; transform: translateY(4px); }
+  16%, 92% { opacity: 1; transform: none; }
+  100% { opacity: 0; }
+}
+
+@keyframes loop-2 {
+  0%, 30% { opacity: 0; transform: translateY(4px); }
+  36%, 92% { opacity: 1; transform: none; }
+  100% { opacity: 0; }
+}
+
+@keyframes loop-3 {
+  0%, 50% { opacity: 0; transform: translateY(4px); }
+  56%, 92% { opacity: 1; transform: none; }
+  100% { opacity: 0; }
+}
+
+@keyframes loop-type {
+  0%, 4% { clip-path: inset(0 100% 0 0); }
+  28%, 100% { clip-path: inset(0 0 0 0); }
+}
