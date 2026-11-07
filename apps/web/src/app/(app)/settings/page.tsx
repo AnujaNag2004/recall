@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { ComingSoonPage } from "@/components/app/page-states";
+import { SettingsView } from "@/components/views/settings-view";
 
 export const metadata: Metadata = { title: "Settings" };
 
-export default function SettingsPage() {
-  return <ComingSoonPage href="/settings" />;
+export default function Page() {
+  return <SettingsView />;
 }

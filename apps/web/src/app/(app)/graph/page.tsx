@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { ComingSoonPage } from "@/components/app/page-states";
+import { GraphView } from "@/components/views/graph-view";
 
 export const metadata: Metadata = { title: "Graph" };
 
-export default function GraphPage() {
-  return <ComingSoonPage href="/graph" />;
+export default function Page() {
+  return <GraphView />;
 }

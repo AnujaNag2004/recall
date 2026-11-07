@@ -14,6 +14,8 @@ export const protectedPrefixes = [
   "/tasks",
   "/insights",
   "/settings",
+  "/saves",
+  "/invites",
   "/reset-password",
 ];
 

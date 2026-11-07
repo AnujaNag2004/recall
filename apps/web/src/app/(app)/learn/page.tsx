@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { ComingSoonPage } from "@/components/app/page-states";
+import { LearnView } from "@/components/views/learn-view";
 
 export const metadata: Metadata = { title: "Learn" };
 
-export default function LearnPage() {
-  return <ComingSoonPage href="/learn" />;
+export default function Page() {
+  return <LearnView />;
 }

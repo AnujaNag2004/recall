@@ -54,6 +54,8 @@ export const config = {
     "/tasks/:path*",
     "/insights/:path*",
     "/settings/:path*",
+    "/saves/:path*",
+    "/invites/:path*",
     "/reset-password",
     "/login",
     "/signup",

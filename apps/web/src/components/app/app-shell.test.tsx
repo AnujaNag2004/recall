@@ -5,7 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { ApiError, apiFetch } from "@/lib/api/client";
 import { AppProviders } from "./app-context";
 import { AppShell } from "./app-shell";
-import { HomeView } from "./home-view";
+import { HomeView } from "@/components/views/home-view";
 
 const push = vi.fn();
 const signOutMock = vi.fn().mockResolvedValue({});
@@ -21,6 +21,17 @@ vi.mock("@/lib/api/client", async (original) => ({
   ...(await original<typeof import("@/lib/api/client")>()),
   apiFetch: vi.fn(),
 }));
+
+const emptyHome = {
+  recall_cards: [],
+  followups: [],
+  today: [],
+  suggested: [],
+  review_count: 0,
+  score: { acted: 0, total: 0, ratio: 0 },
+  streak_days: 0,
+  recent_saves: [],
+};
 
 const me = {
   user: {
@@ -51,15 +62,17 @@ function renderShell() {
 beforeEach(() => {
   vi.clearAllMocks();
   localStorage.clear();
-  vi.mocked(apiFetch).mockResolvedValue(me);
+  vi.mocked(apiFetch).mockImplementation(async (path: string) =>
+    path === "/me" ? me : emptyHome,
+  );
 });
 
 describe("AppShell", () => {
   it("greets the user and shows their workspace", async () => {
     renderShell();
     expect(await screen.findByRole("heading", { name: "Welcome, Priya" })).toBeInTheDocument();
-    expect(screen.getByText("You're in Personal.")).toBeInTheDocument();
-    expect(screen.getByText("Nothing saved yet")).toBeInTheDocument();
+    expect(await screen.findByText("You're in Personal.")).toBeInTheDocument();
+    expect(await screen.findByText("Nothing saved yet")).toBeInTheDocument();
   });
 
   it("marks the current page in the sidebar", async () => {

@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { ComingSoonPage } from "@/components/app/page-states";
+import { AskView } from "@/components/ask/ask-view";
 
 export const metadata: Metadata = { title: "Ask" };
 
 export default function AskPage() {
-  return <ComingSoonPage href="/ask" />;
+  return <AskView />;
 }
