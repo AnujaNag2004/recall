@@ -4,6 +4,8 @@ The whole path, in order, using free plans. Allow about an hour. Everything is o
 
 **Keep your keys out of Git and out of chat.** Git ignores `.env` files, so local keys stay local. Everywhere else, keys go in each service's dashboard.
 
+Just want your keys in? [SETUP_KEYS.md](SETUP_KEYS.md) is the short version.
+
 ## 1. Make two secrets
 
 In the project folder, generate these and save the output somewhere safe. You'll paste them in step 5.
@@ -59,24 +61,19 @@ GROQ_API_KEY=YOUR-KEY
 TAVILY_API_KEY=YOUR-KEY
 ```
 
-Then list the models your keys can use:
+Then let Recall choose models from what your keys can use, which fills in the settings:
+
+```bash
+make pick-models
+```
+
+Then test each provider:
 
 ```bash
 make check-ai
 ```
 
-Model names change often, so pick from that list, and add them to `.env`. Choose a fast chat model, a stronger chat model, an embedding model and a Whisper model:
-
-```
-GEMINI_FAST_MODEL=
-GEMINI_STRONG_MODEL=
-GEMINI_EMBEDDING_MODEL=
-GROQ_FAST_MODEL=
-GROQ_STRONG_MODEL=
-GROQ_WHISPER_MODEL=
-```
-
-Run `make check-ai` again. **OK** next to LLM, Embeddings and Search means they work. Then run these in two terminals:
+**OK** next to LLM, Embeddings and Search means they work. Then run these in two terminals:
 
 ```bash
 make dev-api

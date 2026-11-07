@@ -8,6 +8,8 @@ Two things are stand-ins, because they can't run locally without accounts: Supab
 import json
 import os
 import shutil
+import signal
+import subprocess
 import tempfile
 import threading
 import time
@@ -185,8 +187,17 @@ providers = fake_providers()
 setattr(api_main, "get_providers", lambda: providers)  # noqa: B010
 api_main.app.dependency_overrides[get_providers] = lambda: providers
 
-try:
-    serve(api_main.app, API_PORT)
-finally:
-    pg.cleanup()
-    shutil.rmtree(data_dir, ignore_errors=True)
+# Uvicorn re-raises the stop signal once it's finished, which would skip any cleanup after
+# it. So it runs in a thread, and this main thread owns the signal and the cleanup.
+stop = threading.Event()
+signal.signal(signal.SIGTERM, lambda *_: stop.set())
+signal.signal(signal.SIGINT, lambda *_: stop.set())
+threading.Thread(target=serve, args=(api_main.app, API_PORT), daemon=True).start()
+stop.wait()
+
+# "immediate" ends the workers' open connections, which a polite stop would wait for.
+pg_ctl = Path(pgserver.__file__).parent / "pginstall/bin/pg_ctl"
+subprocess.run(
+    [str(pg_ctl), "-D", data_dir, "stop", "-m", "immediate"], check=False, capture_output=True
+)
+shutil.rmtree(data_dir, ignore_errors=True)

@@ -1,4 +1,4 @@
-.PHONY: setup dev-web dev-api up down lint typecheck test check gen-api check-ai eval seed e2e
+.PHONY: setup dev-web dev-api up down lint typecheck test check gen-api check-ai pick-models eval seed e2e
 
 setup:  ## Install all dependencies
 	npm install
@@ -39,6 +39,9 @@ gen-api:  ## Regenerate the web app's API types from the FastAPI schema
 
 check-ai:  ## List the models your keys can use, and try each provider
 	cd apps/api && PYTHONPATH=. uv run python scripts/check_ai.py
+
+pick-models:  ## Fill the model ID settings in .env, from what your keys can use
+	cd apps/api && PYTHONPATH=. uv run python scripts/pick_models.py
 
 eval:  ## Measure the AI on labeled data. Needs real API keys, and takes a while.
 	cd apps/api && PYTHONPATH=. uv run python evals/run_evals.py

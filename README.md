@@ -82,7 +82,7 @@ Steps after `chunk_and_embed` are optional: if a service is having a bad day, yo
 
 ## Run it locally
 
-Needs Node 20.9+ and [uv](https://docs.astral.sh/uv/). Sign-in needs a free Supabase project, and AI features need free API keys: [DEPLOYMENT.md](DEPLOYMENT.md) covers both.
+Needs Node 20.9+ and [uv](https://docs.astral.sh/uv/). Sign-in needs a free Supabase project, and AI features need free API keys: [SETUP_KEYS.md](SETUP_KEYS.md) covers both.
 
 ```bash
 make setup
