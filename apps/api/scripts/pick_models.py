@@ -107,7 +107,15 @@ async def fetch_models() -> dict[str, str]:
 async def main() -> None:
     if not ENV_FILE.exists():
         sys.exit("No .env file yet. Create one first: see SETUP_KEYS.md.")
-    picked = await fetch_models()
+    try:
+        picked = await fetch_models()
+    except httpx.ConnectError:
+        sys.exit(
+            "Couldn't reach Gemini or Groq. Check your internet connection, and turn off any "
+            "VPN or proxy, then try again. Your keys weren't the problem."
+        )
+    except httpx.TimeoutException:
+        sys.exit("Gemini or Groq took too long to answer. Please try again in a minute.")
     updated, written = merge_env(ENV_FILE.read_text(), picked)
     ENV_FILE.write_text(updated)
     for key, value in written.items():
