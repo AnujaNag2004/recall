@@ -1,10 +1,10 @@
 """FastAPI application entry point."""
 
-from fastapi import FastAPI
+from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import Settings, get_settings
-from app.routers import health
+from app.routers import health, me
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -22,6 +22,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_headers=["*"],
     )
     app.include_router(health.router)
+
+    # Everything under /api/v1 requires a signed-in user.
+    api = APIRouter(prefix="/api/v1")
+    api.include_router(me.router)
+    app.include_router(api)
     return app
 
 

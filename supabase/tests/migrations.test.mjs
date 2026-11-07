@@ -323,3 +323,40 @@ describe("tenant isolation", () => {
     }
   });
 });
+
+describe("new user setup", () => {
+  const signUp = async (email, metadata) => {
+    const [{ id }] = await rows(
+      `insert into auth.users (email, raw_user_meta_data) values ($1, $2) returning id`,
+      [email, metadata],
+    );
+    return id;
+  };
+
+  it("creates a profile and a personal workspace the user owns", async () => {
+    const id = await signUp("priya@example.com", { full_name: "Priya S", avatar_url: "https://a/b.png" });
+    const [profile] = await rows(`select name, avatar_url from public.profiles where user_id = $1`, [id]);
+    assert.deepEqual(profile, { name: "Priya S", avatar_url: "https://a/b.png" });
+
+    const workspaces = await rows(
+      `select w.type, m.role from public.workspaces w
+       join public.workspace_members m on m.workspace_id = w.id
+       where w.owner_id = $1 and m.user_id = $1`,
+      [id],
+    );
+    assert.deepEqual(workspaces, [{ type: "personal", role: "owner" }]);
+  });
+
+  it("falls back to the email name when signup sends no metadata", async () => {
+    const id = await signUp("arjun@example.com", null);
+    const [profile] = await rows(`select name from public.profiles where user_id = $1`, [id]);
+    assert.equal(profile.name, "arjun");
+  });
+
+  it("lets a new user see their own workspace straight away", async () => {
+    const id = await signUp("new@example.com", {});
+    await as(id, async () => {
+      assert.equal((await rows(`select id from public.workspaces`)).length, 1);
+    });
+  });
+});

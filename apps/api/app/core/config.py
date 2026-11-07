@@ -19,9 +19,22 @@ class Settings(BaseSettings):
     # SQLAlchemy async URL, e.g. postgresql+asyncpg://user:pass@host:5432/db
     database_url: str | None = None
 
+    # e.g. https://<project-ref>.supabase.co
+    supabase_url: str | None = None
+    # Only for older projects on shared-secret tokens; see app/core/security.py.
+    supabase_jwt_secret: str | None = None
+
     @property
     def cors_origin_list(self) -> list[str]:
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+
+    @property
+    def supabase_issuer(self) -> str | None:
+        return f"{self.supabase_url.rstrip('/')}/auth/v1" if self.supabase_url else None
+
+    @property
+    def supabase_jwks_url(self) -> str | None:
+        return f"{self.supabase_issuer}/.well-known/jwks.json" if self.supabase_issuer else None
 
 
 @lru_cache

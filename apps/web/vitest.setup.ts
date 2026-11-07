@@ -17,6 +17,14 @@ window.IntersectionObserver = class {
   }
 };
 
+// jsdom has neither of these; the command palette's list needs them.
+window.ResizeObserver = class {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+};
+Element.prototype.scrollIntoView = () => {};
+
 // jsdom has no matchMedia; next-themes needs it to read the system preference.
 window.matchMedia = (query: string) =>
   ({

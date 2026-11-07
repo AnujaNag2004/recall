@@ -7,7 +7,7 @@ export function Container({ className, ...props }: ComponentProps<"div">) {
   return <div className={cn("mx-auto w-full max-w-6xl px-4 sm:px-6", className)} {...props} />;
 }
 
-export function Wordmark({ className }: { className?: string }) {
+export function Wordmark({ className, markOnly = false }: { className?: string; markOnly?: boolean }) {
   return (
     <span className={cn("inline-flex items-center gap-2 font-semibold tracking-tight", className)}>
       <svg viewBox="0 0 24 24" className="size-5" aria-hidden>
@@ -25,7 +25,7 @@ export function Wordmark({ className }: { className?: string }) {
         />
         <circle cx="12" cy="12" r="3.5" className="fill-primary" />
       </svg>
-      Recall
+      {!markOnly && "Recall"}
     </span>
   );
 }

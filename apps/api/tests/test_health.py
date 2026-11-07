@@ -12,6 +12,7 @@ from app.routers.health import get_database_check
 ALLOWED_ORIGIN = "https://recall.example"
 
 
+# These tests need no database, so they shadow the real-database fixtures in conftest.
 @pytest.fixture
 def app() -> FastAPI:
     return create_app(Settings(cors_origins=f"{ALLOWED_ORIGIN}, http://localhost:3000"))

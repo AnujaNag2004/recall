@@ -27,6 +27,9 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/recall
       CORS_ORIGINS: http://localhost:3000
+      # From the root .env. Sign-in needs a real Supabase project; see DEPLOYMENT.md.
+      SUPABASE_URL: ${SUPABASE_URL:-}
+      SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET:-}
     ports:
       - "8000:8000"
     volumes:
@@ -42,6 +45,8 @@ services:
     command: sh -c "npm ci && npm run dev --workspace=apps/web -- --hostname 0.0.0.0"
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:8000
+      NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:-}
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:-}
     ports:
       - "3000:3000"
     volumes:
