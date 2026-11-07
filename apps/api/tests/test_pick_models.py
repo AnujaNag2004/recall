@@ -24,14 +24,24 @@ def test_gemini_prefers_the_newest_stable_flash_and_embedding() -> None:
 
 def test_groq_picks_by_purpose() -> None:
     picked = pick_groq(
-        ["whisper-large-v3", "whisper-large-v3-turbo", "llama-8b-instant", "llama-70b-versatile",
+        ["whisper-large-v3", "whisper-large-v3-turbo", "llama-3.1-8b-instant", "llama-3.3-70b-versatile",
          "meta-llama/llama-guard-4"]
     )  # fmt: skip
     assert picked == {
         "GROQ_WHISPER_MODEL": "whisper-large-v3-turbo",
-        "GROQ_FAST_MODEL": "llama-8b-instant",
-        "GROQ_STRONG_MODEL": "llama-70b-versatile",
+        "GROQ_FAST_MODEL": "llama-3.1-8b-instant",
+        "GROQ_STRONG_MODEL": "llama-3.3-70b-versatile",
     }
+
+
+def test_groq_skips_speech_safety_and_single_language_models() -> None:
+    picked = pick_groq(
+        ["allam-2-7b", "canopylabs/orpheus-v1-english", "meta-llama/llama-prompt-guard-2-86m",
+         "openai/gpt-oss-safeguard-20b", "openai/gpt-oss-20b", "openai/gpt-oss-120b",
+         "qwen/qwen3.8-27b", "whisper-large-v3-turbo"]
+    )  # fmt: skip
+    assert picked["GROQ_FAST_MODEL"] == "openai/gpt-oss-20b"
+    assert picked["GROQ_STRONG_MODEL"] == "openai/gpt-oss-120b"
 
 
 def test_merge_fills_blanks_adds_missing_and_never_overwrites() -> None:

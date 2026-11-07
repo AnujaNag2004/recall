@@ -20,6 +20,14 @@ _NOT_GENERAL = re.compile(
 )
 
 
+_GENERAL_GROQ = re.compile(r"gpt-oss|llama-3|llama-4|qwen|kimi|deepseek|mistral")
+
+
+def _size_in_billions(name: str) -> float:
+    match = re.search(r"(\d+(?:\.\d+)?)b\b", name)
+    return float(match.group(1)) if match else 0.0
+
+
 def _version(name: str) -> tuple[float, ...]:
     return tuple(float(n) for n in re.findall(r"\d+(?:\.\d+)?", name)[:2])
 
@@ -48,13 +56,17 @@ def pick_groq(ids: list[str]) -> dict[str, str]:
     whisper = sorted(i for i in ids if "whisper" in i)
     if whisper:
         picked["GROQ_WHISPER_MODEL"] = next((i for i in whisper if "turbo" in i), whisper[0])
-    chat = [i for i in ids if "whisper" not in i and not _NOT_GENERAL.search(i)]
-    fast = [i for i in chat if "instant" in i] or chat
-    strong = [i for i in chat if "versatile" in i] or chat
-    if fast:
-        picked["GROQ_FAST_MODEL"] = sorted(fast)[0]
-    if strong:
-        picked["GROQ_STRONG_MODEL"] = sorted(strong)[0]
+    # Only well-known general chat families: Groq also hosts speech, safety-filter and
+    # single-language models that would make poor general assistants.
+    chat = [
+        i
+        for i in ids
+        if _GENERAL_GROQ.search(i) and not _NOT_GENERAL.search(i) and "safeguard" not in i
+    ]
+    if chat:
+        by_size = sorted(chat, key=lambda i: (_size_in_billions(i), i))
+        picked["GROQ_FAST_MODEL"] = by_size[0]
+        picked["GROQ_STRONG_MODEL"] = by_size[-1]
     return picked
 
 
