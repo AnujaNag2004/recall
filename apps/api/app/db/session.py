@@ -10,6 +10,7 @@ workspace's data: this is the second layer of defense behind `require_role`.
 
 import json
 from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from functools import lru_cache
 from typing import Annotated
 
@@ -45,9 +46,8 @@ async def check_database() -> None:
         await connection.execute(text("select 1"))
 
 
-async def get_user_session(
-    user: Annotated[CurrentUser, Depends(get_current_user)],
-) -> AsyncIterator[AsyncSession]:
+@asynccontextmanager
+async def user_session(user: CurrentUser) -> AsyncIterator[AsyncSession]:
     """A transaction running as this user, exactly as a Supabase client request would.
 
     Both settings are transaction-local, so they can't leak to whoever uses this
@@ -59,4 +59,19 @@ async def get_user_session(
             text("select set_config('request.jwt.claims', :claims, true)"), {"claims": claims}
         )
         await session.execute(text("set local role authenticated"))
+        yield session
+
+
+async def get_user_session(
+    user: Annotated[CurrentUser, Depends(get_current_user)],
+) -> AsyncIterator[AsyncSession]:
+    async with user_session(user) as session:
+        yield session
+
+
+@asynccontextmanager
+async def service_session() -> AsyncIterator[AsyncSession]:
+    """For background workers only: runs outside row-level security, so no request
+    handler may ever use this on a user's behalf."""
+    async with AsyncSession(get_engine(), expire_on_commit=False) as session, session.begin():
         yield session

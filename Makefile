@@ -1,4 +1,4 @@
-.PHONY: setup dev-web dev-api up down lint typecheck test check gen-api
+.PHONY: setup dev-web dev-api up down lint typecheck test check gen-api check-ai
 
 setup:  ## Install all dependencies
 	npm install
@@ -34,3 +34,6 @@ check: lint typecheck test  ## Everything CI runs, except the production build
 gen-api:  ## Regenerate the web app's API types from the FastAPI schema
 	cd apps/api && PYTHONPATH=. uv run python scripts/export_openapi.py > ../web/src/lib/api/openapi.json
 	cd apps/web && npx openapi-typescript src/lib/api/openapi.json -o src/lib/api/schema.d.ts
+
+check-ai:  ## List the models your keys can use, and try each provider
+	cd apps/api && PYTHONPATH=. uv run python scripts/check_ai.py

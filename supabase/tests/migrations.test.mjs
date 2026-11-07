@@ -120,7 +120,7 @@ describe("schema", () => {
 
   it("rejects a chunk whose workspace differs from its save's", async () => {
     const [{ id: otherWorkspace }] = await rows(
-      `insert into public.workspaces (name, owner_id) values ('Other', $1) returning id`,
+      `insert into public.workspaces (name, type, owner_id) values ('Other', 'team', $1) returning id`,
       [BOB],
     );
     await assert.rejects(
