@@ -8,7 +8,8 @@ import asyncio
 import httpx
 
 from app.core.config import get_settings
-from app.providers.base import ProviderError
+from app.providers.base import ModelTier, ProviderError
+from app.providers.http_providers import GeminiProvider, GroqProvider
 from app.providers.registry import get_providers
 
 
@@ -53,8 +54,15 @@ async def attempt(name: str, call) -> None:  # type: ignore[no-untyped-def]
 async def main() -> None:
     await list_models()
     providers = get_providers()
+    settings = get_settings()
     print("\nTrying each provider:")
-    await attempt("LLM", providers.llm.complete("Reply with the word ready."))
+    # Tested one by one, because the app's fallback would hide a failing Gemini behind Groq.
+    gemini, groq = GeminiProvider(settings), GroqProvider(settings)
+    prompt = "Reply with the word ready."
+    await attempt("Gemini fast", gemini.complete(prompt, tier=ModelTier.FAST))
+    await attempt("Gemini strong", gemini.complete(prompt, tier=ModelTier.STRONG))
+    await attempt("Groq fast (backup)", groq.complete(prompt, tier=ModelTier.FAST))
+    await attempt("Groq strong (backup)", groq.complete(prompt, tier=ModelTier.STRONG))
     await attempt("Embeddings", providers.embeddings.embed(["hello"]))
     await attempt("Search", providers.search.search("official python website", max_results=1))
     print("\nTranscription is checked the first time you upload audio.")
