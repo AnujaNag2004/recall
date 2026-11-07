@@ -21,7 +21,6 @@ __pycache__/
 .vercel/
 coverage/
 .DS_Store
-.claude/settings.local.json
 
 # Intermediate output of make gen-api
 openapi.json
