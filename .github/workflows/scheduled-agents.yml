@@ -1,0 +1,35 @@
+name: Scheduled agents
+
+# Free hosting has no always-on scheduler, so GitHub Actions triggers these. They only
+# queue work: the API's own worker runs it.
+on:
+  schedule:
+    - cron: "7 * * * *" # Hourly: follow-ups, just-in-time recall, adapting tasks.
+    - cron: "23 6 * * 1" # Mondays: digests, reflections, link health.
+  workflow_dispatch:
+    inputs:
+      job:
+        description: Which job to trigger
+        required: true
+        default: hourly
+        type: choice
+        options: [hourly, weekly]
+
+permissions:
+  contents: read
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    env:
+      API_URL: ${{ secrets.RECALL_API_URL }}
+      CRON_SECRET: ${{ secrets.RECALL_CRON_SECRET }}
+      JOB: ${{ github.event.inputs.job || (github.event.schedule == '23 6 * * 1' && 'weekly' || 'hourly') }}
+    steps:
+      - name: Wake the server
+        # A sleeping free-tier server can take a minute to start.
+        run: curl --fail --silent --retry 5 --retry-delay 15 --max-time 90 "$API_URL/health"
+      - name: Queue the job
+        run: >
+          curl --fail --silent --show-error --retry 3 --retry-delay 10
+          -X POST -H "X-Cron-Secret: $CRON_SECRET" "$API_URL/internal/cron/$JOB"

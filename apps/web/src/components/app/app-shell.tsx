@@ -3,7 +3,7 @@
 import { LogOut, Menu, PanelLeftClose, PanelLeftOpen, Plus, Search } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { type ReactNode, useEffect, useState, useSyncExternalStore } from "react";
+import { type ReactNode, Suspense, useEffect, useState, useSyncExternalStore } from "react";
 import { Wordmark } from "@/components/landing/primitives";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
@@ -181,7 +181,10 @@ export function AppShell({ children }: { children: ReactNode }) {
           </Link>
         </div>
         <WorkspaceSwitcher collapsed={collapsed} />
-        <SidebarNav collapsed={collapsed} />
+        {/* The current URL isn't known while prerendering dynamic routes like /saves/[id]. */}
+        <Suspense fallback={<div className="flex-1" />}>
+          <SidebarNav collapsed={collapsed} />
+        </Suspense>
         <Button
           variant="ghost"
           size="icon"
@@ -202,7 +205,9 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Wordmark />
           </DialogTitle>
           <WorkspaceSwitcher />
-          <SidebarNav onNavigate={() => setDrawerOpen(false)} />
+          <Suspense fallback={<div className="flex-1" />}>
+            <SidebarNav onNavigate={() => setDrawerOpen(false)} />
+          </Suspense>
         </DialogContent>
       </Dialog>
 

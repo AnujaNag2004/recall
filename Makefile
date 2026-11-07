@@ -1,8 +1,9 @@
-.PHONY: setup dev-web dev-api up down lint typecheck test check gen-api check-ai
+.PHONY: setup dev-web dev-api up down lint typecheck test check gen-api check-ai eval seed
 
 setup:  ## Install all dependencies
 	npm install
 	cd apps/api && uv sync
+	cd apps/mcp && uv sync
 
 dev-web:  ## Run the web app on :3000
 	npm run dev:web
@@ -28,6 +29,7 @@ test:
 	npm run test:web
 	npm run test:db
 	cd apps/api && uv run pytest
+	cd apps/mcp && uv run pytest
 
 check: lint typecheck test  ## Everything CI runs, except the production build
 
@@ -37,3 +39,9 @@ gen-api:  ## Regenerate the web app's API types from the FastAPI schema
 
 check-ai:  ## List the models your keys can use, and try each provider
 	cd apps/api && PYTHONPATH=. uv run python scripts/check_ai.py
+
+eval:  ## Measure the AI on labeled data. Needs real API keys, and takes a while.
+	cd apps/api && PYTHONPATH=. uv run python evals/run_evals.py
+
+seed:  ## Create the demo account's data. Needs DEMO_EMAIL set and that user to exist.
+	cd apps/api && PYTHONPATH=. uv run python ../../supabase/seed/seed_demo.py

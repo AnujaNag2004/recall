@@ -1,0 +1,30 @@
+{"name": "Notion", "type": "tool", "domain": "notion.so", "context": "Try Notion for this."}
+{"name": "Figma", "type": "tool", "domain": "figma.com", "context": "Try Figma for this."}
+{"name": "Linear", "type": "tool", "domain": "linear.app", "context": "Try Linear for this."}
+{"name": "Stripe", "type": "product", "domain": "stripe.com", "context": "Try Stripe for this."}
+{"name": "Vercel", "type": "tool", "domain": "vercel.com", "context": "Try Vercel for this."}
+{"name": "Supabase", "type": "tool", "domain": "supabase.com", "context": "Try Supabase for this."}
+{"name": "LeetCode", "type": "website", "domain": "leetcode.com", "context": "Try LeetCode for this."}
+{"name": "VisuAlgo", "type": "website", "domain": "visualgo.net", "context": "Try VisuAlgo for this."}
+{"name": "Khan Academy", "type": "website", "domain": "khanacademy.org", "context": "Try Khan Academy for this."}
+{"name": "Coursera", "type": "website", "domain": "coursera.org", "context": "Try Coursera for this."}
+{"name": "Duolingo", "type": "product", "domain": "duolingo.com", "context": "Try Duolingo for this."}
+{"name": "Obsidian", "type": "tool", "domain": "obsidian.md", "context": "Try Obsidian for this."}
+{"name": "Canva", "type": "tool", "domain": "canva.com", "context": "Try Canva for this."}
+{"name": "Grammarly", "type": "tool", "domain": "grammarly.com", "context": "Try Grammarly for this."}
+{"name": "Zapier", "type": "tool", "domain": "zapier.com", "context": "Try Zapier for this."}
+{"name": "Airtable", "type": "tool", "domain": "airtable.com", "context": "Try Airtable for this."}
+{"name": "Slack", "type": "tool", "domain": "slack.com", "context": "Try Slack for this."}
+{"name": "Trello", "type": "tool", "domain": "trello.com", "context": "Try Trello for this."}
+{"name": "Postman", "type": "tool", "domain": "postman.com", "context": "Try Postman for this."}
+{"name": "Docker", "type": "tool", "domain": "docker.com", "context": "Try Docker for this."}
+{"name": "Hugging Face", "type": "website", "domain": "huggingface.co", "context": "Try Hugging Face for this."}
+{"name": "Kaggle", "type": "website", "domain": "kaggle.com", "context": "Try Kaggle for this."}
+{"name": "freeCodeCamp", "type": "website", "domain": "freecodecamp.org", "context": "Try freeCodeCamp for this."}
+{"name": "Wikipedia", "type": "website", "domain": "wikipedia.org", "context": "Try Wikipedia for this."}
+{"name": "Anki", "type": "tool", "domain": "ankiweb.net", "context": "Try Anki for this."}
+{"name": "Spotify", "type": "product", "domain": "spotify.com", "context": "Try Spotify for this."}
+{"name": "Calendly", "type": "tool", "domain": "calendly.com", "context": "Try Calendly for this."}
+{"name": "Loom", "type": "tool", "domain": "loom.com", "context": "Try Loom for this."}
+{"name": "Miro", "type": "tool", "domain": "miro.com", "context": "Try Miro for this."}
+{"name": "Raycast", "type": "tool", "domain": "raycast.com", "context": "Try Raycast for this."}
