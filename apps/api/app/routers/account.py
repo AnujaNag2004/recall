@@ -1,5 +1,6 @@
 """Profile, API keys, usage, data export, account deletion and the agent run log."""
 
+import contextlib
 from datetime import datetime
 from typing import Annotated, Any
 from uuid import UUID
@@ -16,6 +17,7 @@ from app.core.permissions import require_role
 from app.core.security import CurrentUser, generate_api_key, get_current_user, hash_api_key
 from app.db.models import WorkspaceMember, WorkspaceRole
 from app.db.session import get_user_session, service_session
+from app.services.storage import FileStore, StorageError, get_file_store
 
 router = APIRouter(tags=["account"])
 
@@ -168,21 +170,60 @@ async def export_data(user: User, session: Session) -> dict[str, Any]:
     }
 
 
+def _optional_files() -> FileStore | None:
+    try:
+        return get_file_store()
+    except StorageError:
+        return None
+
+
+async def owned_file_paths(user_id: UUID) -> list[str]:
+    """Uploads in the workspaces this person owns: exactly the saves deletion cascades to."""
+    async with service_session() as session:
+        rows = await session.scalars(
+            text(
+                "select s.storage_path from public.saves s "
+                "join public.workspaces w on w.id = s.workspace_id "
+                "where w.owner_id = :u and s.storage_path is not null"
+            ),
+            {"u": user_id},
+        )
+        return list(rows)
+
+
+async def delete_auth_user(supabase_url: str, key: str, user_id: UUID) -> bool:
+    async with httpx.AsyncClient(timeout=15) as client:
+        response = await client.delete(
+            f"{supabase_url.rstrip('/')}/auth/v1/admin/users/{user_id}",
+            headers={"Authorization": f"Bearer {key}", "apikey": key},
+        )
+    return response.status_code < 400
+
+
 @router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_account(body: DeleteAccount, user: User, settings: Config) -> None:
+async def delete_account(
+    body: DeleteAccount,
+    user: User,
+    settings: Config,
+    files: Annotated[FileStore | None, Depends(_optional_files)],
+) -> None:
     if body.confirm != "delete my account":
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "Confirmation didn't match")
     if not settings.supabase_url or not settings.supabase_service_role_key:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Account deletion is unavailable")
-    key = settings.supabase_service_role_key
-    async with httpx.AsyncClient(timeout=15) as client:
-        response = await client.delete(
-            f"{settings.supabase_url.rstrip('/')}/auth/v1/admin/users/{user.id}",
-            headers={"Authorization": f"Bearer {key}", "apikey": key},
-        )
-    if response.status_code >= 400:
+    # Read before deleting: the rows that point at these files go with the account.
+    paths = await owned_file_paths(user.id)
+    deleted = await delete_auth_user(
+        settings.supabase_url, settings.supabase_service_role_key, user.id
+    )
+    if not deleted:
         raise HTTPException(status.HTTP_502_BAD_GATEWAY, "Your account couldn't be deleted")
-    # Foreign keys cascade from auth.users, removing everything the person owns.
+    # Foreign keys cascade from auth.users, removing every row the person owns. Files in
+    # Storage aren't rows, so they're removed here. One failure shouldn't stop the rest.
+    if files:
+        for path in paths:
+            with contextlib.suppress(StorageError):
+                await files.delete(path)
 
 
 @router.get("/workspaces/{workspace_id}/agent-runs")

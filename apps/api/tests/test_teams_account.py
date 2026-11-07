@@ -278,6 +278,43 @@ async def test_delete_account_needs_exact_confirmation(client: AsyncClient, post
     assert response.status_code == 422
 
 
+async def test_delete_account_removes_your_files_and_only_yours(
+    app: FastAPI, client: AsyncClient, postgres: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from app.routers import account
+
+    leaving, staying = create_user(postgres), create_user(postgres)
+    mine = await create_note(
+        client, (await personal_workspace(client, auth_header(leaving)), auth_header(leaving))
+    )
+    theirs = await create_note(
+        client, (await personal_workspace(client, auth_header(staying)), auth_header(staying))
+    )
+    for save_id, path in ((mine, "leaving/file.pdf"), (theirs, "staying/file.pdf")):
+        postgres.psql(f"update public.saves set storage_path = '{path}' where id = '{save_id}';")
+
+    deleted: list[str] = []
+
+    class Files:
+        async def delete(self, path: str) -> None:
+            deleted.append(path)
+
+    async def delete_auth_user(url: str, key: str, user_id: Any) -> bool:
+        return True
+
+    monkeypatch.setattr(account, "delete_auth_user", delete_auth_user)
+    settings = app.dependency_overrides[get_settings]()
+    configured = settings.model_copy(update={"supabase_service_role_key": "test-key"})
+    app.dependency_overrides[get_settings] = lambda: configured
+    app.dependency_overrides[account._optional_files] = lambda: Files()
+
+    response = await client.request(
+        "DELETE", "/api/v1/me", headers=auth_header(leaving), json={"confirm": "delete my account"}
+    )
+    assert response.status_code == 204
+    assert deleted == ["leaving/file.pdf"]
+
+
 async def test_profile_updates(client: AsyncClient, postgres: Any) -> None:
     headers = auth_header(create_user(postgres))
     await client.patch(

@@ -91,6 +91,17 @@ export function SignupForm() {
           Sign in
         </Link>
       </p>
+      <p className="mt-4 text-center text-xs text-pretty text-muted-foreground">
+        By continuing, you agree to the{" "}
+        <Link href="/terms" className="underline underline-offset-4 hover:text-foreground">
+          Terms
+        </Link>{" "}
+        and{" "}
+        <Link href="/privacy" className="underline underline-offset-4 hover:text-foreground">
+          Privacy Policy
+        </Link>
+        .
+      </p>
     </>
   );
 }

@@ -27,10 +27,13 @@ export function FinalCta() {
 
 export function Footer() {
   const links = [
-    { href: "#features", label: "Features" },
-    { href: "#how-it-works", label: "How it works" },
-    { href: "#pricing", label: "Pricing" },
-    { href: "#faq", label: "FAQ" },
+    // Absolute, so they also work from the legal pages, which share this footer.
+    { href: "/#features", label: "Features" },
+    { href: "/#how-it-works", label: "How it works" },
+    { href: "/#pricing", label: "Pricing" },
+    { href: "/#faq", label: "FAQ" },
+    { href: "/privacy", label: "Privacy" },
+    { href: "/terms", label: "Terms" },
     ...(site.githubUrl ? [{ href: site.githubUrl, label: "GitHub" }] : []),
   ];
 
