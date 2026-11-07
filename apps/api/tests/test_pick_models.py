@@ -24,8 +24,8 @@ def test_gemini_prefers_the_newest_stable_flash_and_embedding() -> None:
 
 def test_groq_picks_by_purpose() -> None:
     picked = pick_groq(
-        ["whisper-large-v3", "whisper-large-v3-turbo", "llama-3.1-8b-instant", "llama-3.3-70b-versatile",
-         "meta-llama/llama-guard-4"]
+        ["whisper-large-v3", "whisper-large-v3-turbo", "llama-3.1-8b-instant",
+         "llama-3.3-70b-versatile", "meta-llama/llama-guard-4"]
     )  # fmt: skip
     assert picked == {
         "GROQ_WHISPER_MODEL": "whisper-large-v3-turbo",
