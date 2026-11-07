@@ -118,7 +118,7 @@ describe("use cases", () => {
 describe("FAQ", () => {
   it("keeps every answer in the document for search engines", () => {
     render(<Faq />);
-    expect(screen.getByText(/portfolio project/)).toBeInTheDocument();
+    expect(screen.getByText(/Anuja builds it independently/)).toBeInTheDocument();
     expect(screen.getByText(/must come from real search results/)).toBeInTheDocument();
   });
 });

@@ -25,3 +25,7 @@ coverage/
 
 # Intermediate output of make gen-api
 openapi.json
+
+# Playwright
+test-results/
+playwright-report/

@@ -8,6 +8,7 @@ import {
   useContext,
   useMemo,
   useState,
+  useSyncExternalStore,
 } from "react";
 import { ApiError, apiFetch, type Me, type Workspace } from "@/lib/api/client";
 import { createClient } from "@/lib/supabase/client";
@@ -22,8 +23,19 @@ function readStorage(key: string): string | null {
   }
 }
 
+const noSubscription = () => () => {};
+
+/** False during the server render and hydration, then true. */
+function useHydrated() {
+  return useSyncExternalStore(
+    noSubscription,
+    () => true,
+    () => false,
+  );
+}
+
 export function useMe() {
-  return useQuery({
+  const query = useQuery({
     queryKey: ["me"],
     queryFn: () => apiFetch<Me>("/me"),
     staleTime: 5 * 60 * 1000,
@@ -32,6 +44,14 @@ export function useMe() {
       !(error instanceof ApiError && error.status === 401) && failures < 2,
     retryDelay: (attempt) => 2000 * 2 ** attempt,
   });
+  // A part of the page can still be hydrating when the response arrives. Holding the data
+  // back until hydration finishes keeps that part matching what the server rendered.
+  const hydrated = useHydrated();
+  return {
+    ...query,
+    data: hydrated ? query.data : undefined,
+    isPending: hydrated ? query.isPending : true,
+  };
 }
 
 /** A full page load drops every cached query, so nothing of this user's survives. */

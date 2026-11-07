@@ -23,6 +23,23 @@ jobs:
       - run: npm run test:web
       - run: npm run build:web
 
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: astral-sh/setup-uv@v6
+      - run: npm ci
+      - run: uv sync --frozen
+        working-directory: apps/api
+      - run: npx playwright install --with-deps chromium
+        working-directory: apps/web
+      - run: npm run test:e2e
+        working-directory: apps/web
+
   database:
     runs-on: ubuntu-latest
     steps:

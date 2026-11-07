@@ -45,7 +45,7 @@ export function Pricing() {
         <SectionHeading
           eyebrow="Pricing"
           title="Simple plans."
-          lead="This is a mock pricing table for a portfolio demo. Nothing here is for sale and nothing will charge you."
+          lead="This is a mock pricing table. Nothing here is for sale and nothing will charge you."
         />
         <ul className="reveal mt-12 grid gap-4 lg:grid-cols-3">
           {plans.map((plan) => (

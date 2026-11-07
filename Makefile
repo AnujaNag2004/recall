@@ -1,4 +1,4 @@
-.PHONY: setup dev-web dev-api up down lint typecheck test check gen-api check-ai eval seed
+.PHONY: setup dev-web dev-api up down lint typecheck test check gen-api check-ai eval seed e2e
 
 setup:  ## Install all dependencies
 	npm install
@@ -45,3 +45,6 @@ eval:  ## Measure the AI on labeled data. Needs real API keys, and takes a while
 
 seed:  ## Create the demo account's data. Needs DEMO_EMAIL set and that user to exist.
 	cd apps/api && PYTHONPATH=. uv run python ../../supabase/seed/seed_demo.py
+
+e2e:  ## Browser tests of the whole product on a local rig. No accounts needed.
+	cd apps/web && npm run test:e2e

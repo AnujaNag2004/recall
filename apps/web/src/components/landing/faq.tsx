@@ -3,8 +3,8 @@ import { Container, SectionHeading } from "./primitives";
 
 const questions = [
   {
-    q: "Is Recall a real product?",
-    a: "It's a portfolio project built to production standards by Anuja. It's being built in public, phase by phase, so some of what this page describes is still on the way. The pricing is a mock.",
+    q: "Who makes Recall?",
+    a: "Anuja builds it independently, to production standards. It runs on free infrastructure, so the server can take a minute to wake up, and AI use has a daily limit. There's nothing to pay for: the pricing above is a mock.",
   },
   {
     q: "What can I save?",
@@ -24,7 +24,7 @@ const questions = [
   },
   {
     q: "Is my data private?",
-    a: "Every workspace is isolated by row-level security in the database, as well as by checks in the API. You'll be able to export your data or delete your account from Settings.",
+    a: "Every workspace is isolated by row-level security in the database, as well as by checks in the API. Saved content is sent to AI providers to process it, with email addresses and phone numbers removed first. You can export your data or delete your account from Settings at any time.",
   },
 ];
 

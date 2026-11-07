@@ -108,6 +108,8 @@ export function GraphView() {
         nodes={flow.nodes}
         edges={flow.edges}
         fitView
+        fitViewOptions={{ maxZoom: 1.1, padding: 0.3 }}
+        className="[&_.react-flow__handle]:opacity-0"
         colorMode={resolvedTheme === "dark" ? "dark" : "light"}
         nodesConnectable={false}
         onNodeClick={(_, node) => router.push(`/library?topic=${node.id}`)}
