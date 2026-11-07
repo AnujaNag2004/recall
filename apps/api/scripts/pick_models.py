@@ -32,23 +32,46 @@ def _version(name: str) -> tuple[float, ...]:
     return tuple(float(n) for n in re.findall(r"\d+(?:\.\d+)?", name)[:2])
 
 
+def gemini_chat_candidates(models: list[dict[str, object]]) -> list[str]:
+    """Flash models, newest first. Flash suits both tiers: stronger ones rarely have free quota."""
+    chat = []
+    for model in models:
+        name = str(model.get("name", "")).removeprefix("models/")
+        methods = model.get("supportedGenerationMethods") or []
+        if "generateContent" in methods and "flash" in name and not _NOT_GENERAL.search(name):  # type: ignore[operator]
+            chat.append(name)
+    return sorted(chat, key=lambda n: (_version(n), "latest" not in n), reverse=True)
+
+
 def pick_gemini(models: list[dict[str, object]]) -> dict[str, str]:
-    """Flash for both tiers, because stronger models often have no free quota."""
-    chat, embedding = [], []
+    """A first guess from the list alone. `fetch_models` then confirms chat models answer."""
+    embedding = []
     for model in models:
         name = str(model.get("name", "")).removeprefix("models/")
         methods = model.get("supportedGenerationMethods") or []
         if "embedContent" in methods and "embedding" in name and not _NOT_GENERAL.search(name):  # type: ignore[operator]
             embedding.append(name)
-        if "generateContent" in methods and "flash" in name and not _NOT_GENERAL.search(name):  # type: ignore[operator]
-            chat.append(name)
     picked: dict[str, str] = {}
+    chat = gemini_chat_candidates(models)
     if chat:
-        best = max(chat, key=lambda n: (_version(n), "latest" not in n))
-        picked |= {"GEMINI_FAST_MODEL": best, "GEMINI_STRONG_MODEL": best}
+        picked |= {"GEMINI_FAST_MODEL": chat[0], "GEMINI_STRONG_MODEL": chat[0]}
     if embedding:
         picked["GEMINI_EMBEDDING_MODEL"] = max(embedding, key=_version)
     return picked
+
+
+async def _answers(client: httpx.AsyncClient, key: str, model: str) -> bool:
+    """Being listed isn't enough: a model can be retired for new users, or overloaded."""
+    try:
+        response = await client.post(
+            f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
+            headers={"x-goog-api-key": key},
+            json={"contents": [{"role": "user", "parts": [{"text": "Reply with: ok"}]}]},
+            timeout=30,
+        )
+    except httpx.HTTPError:
+        return False
+    return response.status_code == 200
 
 
 def pick_groq(ids: list[str]) -> dict[str, str]:
@@ -97,7 +120,23 @@ async def fetch_models() -> dict[str, str]:
                 headers={"x-goog-api-key": settings.gemini_api_key},
             )
             if response.status_code == 200:
-                picked |= pick_gemini(response.json().get("models", []))
+                models = response.json().get("models", [])
+                picked |= pick_gemini(models)
+                print("Testing Gemini models, newest first…")
+                working: list[str] = []
+                for candidate in gemini_chat_candidates(models)[:8]:
+                    if await _answers(client, settings.gemini_api_key, candidate):
+                        working.append(candidate)
+                        if len(working) == 2:
+                            break
+                if working:
+                    # The newer working model does the heavier answering work.
+                    picked["GEMINI_STRONG_MODEL"] = working[0]
+                    picked["GEMINI_FAST_MODEL"] = working[-1]
+                else:
+                    print("No Gemini chat model answered. Groq will be used until one does.")
+                    picked.pop("GEMINI_FAST_MODEL", None)
+                    picked.pop("GEMINI_STRONG_MODEL", None)
             else:
                 print(f"Gemini refused the key (HTTP {response.status_code}).")
         else:
