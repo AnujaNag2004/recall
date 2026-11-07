@@ -42,6 +42,7 @@ class TaskOut(BaseModel):
     followup_at: datetime | None
     completed_at: datetime | None
     source_agent: str | None
+    skip_count: int = 0
     created_at: datetime
 
 

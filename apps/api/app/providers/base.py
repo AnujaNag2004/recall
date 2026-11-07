@@ -1,6 +1,7 @@
 """Provider interfaces. Everything AI-related goes through these, so any provider can
 be swapped through configuration, and tests can run without network access."""
 
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import Protocol
@@ -49,6 +50,10 @@ class LLMProvider(Protocol):
         tier: ModelTier = ModelTier.FAST,
         json_mode: bool = False,
     ) -> str: ...
+
+    def stream(
+        self, prompt: str, *, system: str | None = None, tier: ModelTier = ModelTier.STRONG
+    ) -> AsyncIterator[str]: ...
 
     async def describe_media(self, data: bytes, mime_type: str, prompt: str) -> str: ...
 

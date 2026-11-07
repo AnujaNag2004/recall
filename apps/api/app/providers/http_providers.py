@@ -2,6 +2,8 @@
 
 import asyncio
 import base64
+import json
+from collections.abc import AsyncIterator
 from typing import Any
 
 import httpx
@@ -81,6 +83,29 @@ class GeminiProvider:
             body["generationConfig"] = {"responseMimeType": "application/json"}
         return await self._generate(self._model(tier), body)
 
+    async def stream(
+        self, prompt: str, *, system: str | None = None, tier: ModelTier = ModelTier.STRONG
+    ) -> AsyncIterator[str]:
+        body: dict[str, Any] = {"contents": [{"role": "user", "parts": [{"text": prompt}]}]}
+        if system:
+            body["systemInstruction"] = {"parts": [{"text": system}]}
+        url = f"{GEMINI_URL}/models/{self._model(tier)}:streamGenerateContent?alt=sse"
+        try:
+            async with self._client.stream(
+                "POST", url, headers=self._headers(), json=body
+            ) as response:
+                _raise_for_status("Gemini", response)
+                async for line in response.aiter_lines():
+                    if not line.startswith("data:"):
+                        continue
+                    payload = json.loads(line[5:])
+                    for candidate in payload.get("candidates", []):
+                        for part in candidate.get("content", {}).get("parts", []):
+                            if part.get("text"):
+                                yield part["text"]
+        except httpx.HTTPError as error:
+            raise ProviderError("Could not reach Gemini") from error
+
     async def describe_media(self, data: bytes, mime_type: str, prompt: str) -> str:
         inline = {"mimeType": mime_type, "data": base64.b64encode(data).decode()}
         body = {"contents": [{"role": "user", "parts": [{"inlineData": inline}, {"text": prompt}]}]}
@@ -153,6 +178,33 @@ class GroqProvider:
         if not content:
             raise ProviderError("Groq returned no text")
         return str(content)
+
+    async def stream(
+        self, prompt: str, *, system: str | None = None, tier: ModelTier = ModelTier.STRONG
+    ) -> AsyncIterator[str]:
+        model = (
+            _require(self._settings.groq_strong_model, "GROQ_STRONG_MODEL")
+            if tier == ModelTier.STRONG
+            else _require(self._settings.groq_fast_model, "GROQ_FAST_MODEL")
+        )
+        messages = [{"role": "system", "content": system}] if system else []
+        messages.append({"role": "user", "content": prompt})
+        try:
+            async with self._client.stream(
+                "POST",
+                f"{GROQ_URL}/chat/completions",
+                headers=self._headers(),
+                json={"model": model, "messages": messages, "stream": True},
+            ) as response:
+                _raise_for_status("Groq", response)
+                async for line in response.aiter_lines():
+                    if not line.startswith("data:") or line.strip() == "data: [DONE]":
+                        continue
+                    delta = json.loads(line[5:])["choices"][0]["delta"].get("content")
+                    if delta:
+                        yield delta
+        except httpx.HTTPError as error:
+            raise ProviderError("Could not reach Groq") from error
 
     async def describe_media(self, data: bytes, mime_type: str, prompt: str) -> str:
         raise ProviderNotConfiguredError("Groq has no media understanding here")
@@ -235,6 +287,24 @@ class FallbackLLM:
         return await self._first_success(
             lambda p: p.complete(prompt, system=system, tier=tier, json_mode=json_mode)
         )
+
+    async def stream(
+        self, prompt: str, *, system: str | None = None, tier: ModelTier = ModelTier.STRONG
+    ) -> AsyncIterator[str]:
+        """Falls back only before the first token: restarting mid-answer would garble it."""
+        last_error: ProviderError | None = None
+        for provider in self._providers:
+            started = False
+            try:
+                async for token in provider.stream(prompt, system=system, tier=tier):
+                    started = True
+                    yield token
+                return
+            except ProviderError as error:
+                if started:
+                    raise
+                last_error = error
+        raise last_error or ProviderNotConfiguredError("No LLM provider configured")
 
     async def describe_media(self, data: bytes, mime_type: str, prompt: str) -> str:
         return await self._first_success(lambda p: p.describe_media(data, mime_type, prompt))

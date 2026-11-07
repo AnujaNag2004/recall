@@ -11,33 +11,16 @@ workspace's data: this is the second layer of defense behind `require_role`.
 import json
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from functools import lru_cache
 from typing import Annotated
 
 from fastapi import Depends
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import get_settings
 from app.core.security import CurrentUser, get_current_user
+from app.db.engine import DatabaseNotConfiguredError, get_engine
 
-
-class DatabaseNotConfiguredError(RuntimeError):
-    """Raised when DATABASE_URL is not set."""
-
-
-@lru_cache
-def get_engine() -> AsyncEngine:
-    url = get_settings().database_url
-    if not url:
-        raise DatabaseNotConfiguredError("DATABASE_URL is not set")
-    return create_async_engine(
-        url,
-        pool_pre_ping=True,
-        # Supabase's connection pooler runs in transaction mode, which does not
-        # support the prepared-statement cache asyncpg keeps by default.
-        connect_args={"statement_cache_size": 0},
-    )
+__all__ = ["DatabaseNotConfiguredError", "get_engine"]
 
 
 async def check_database() -> None:

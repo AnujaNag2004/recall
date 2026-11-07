@@ -69,7 +69,7 @@ def test_settings_split_cors_origins() -> None:
 
 
 def test_engine_requires_database_url(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("app.db.session.get_settings", lambda: Settings(database_url=None))
+    monkeypatch.setattr("app.db.engine.get_settings", lambda: Settings(database_url=None))
     get_engine.cache_clear()
     with pytest.raises(DatabaseNotConfiguredError):
         get_engine()

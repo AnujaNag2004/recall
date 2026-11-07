@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.exc import StaleDataError
 
 from app.core.config import Settings, get_settings
+from app.core.limits import enforce_ai_limits
 from app.core.permissions import require_role
 from app.core.security import CurrentUser, get_current_user
 from app.db.models import (
@@ -73,7 +74,11 @@ def _intent_source(intent: str | None) -> IntentSource | None:
     return IntentSource.user if intent else None
 
 
-@router.post("/workspaces/{workspace_id}/saves", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/workspaces/{workspace_id}/saves",
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(enforce_ai_limits)],
+)
 async def create_save(
     workspace_id: UUID, body: SaveCreate, member: Member, user: User, session: Session
 ) -> SaveSummaryOut:
@@ -105,7 +110,11 @@ async def create_save(
     return SaveSummaryOut.model_validate(save, from_attributes=True)
 
 
-@router.post("/workspaces/{workspace_id}/saves/upload", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/workspaces/{workspace_id}/saves/upload",
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(enforce_ai_limits)],
+)
 async def upload_save(
     workspace_id: UUID,
     file: UploadFile,

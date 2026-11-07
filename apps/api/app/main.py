@@ -11,7 +11,20 @@ from sqlalchemy.exc import DBAPIError
 
 from app.core.config import Settings, get_settings
 from app.providers.registry import get_providers
-from app.routers import health, home, me, saves, tasks
+from app.routers import (
+    account,
+    ask,
+    calendar,
+    health,
+    home,
+    insights,
+    internal,
+    learn,
+    me,
+    saves,
+    tasks,
+    workspaces,
+)
 from app.services.storage import StorageError, get_file_store
 from app.workers.handlers import build_handlers
 from app.workers.queue import worker_loop
@@ -63,6 +76,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_headers=["*"],
     )
     app.include_router(health.router)
+    app.include_router(internal.router)
 
     # Everything under /api/v1 requires a signed-in user.
     api = APIRouter(prefix="/api/v1")
@@ -70,6 +84,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     api.include_router(saves.router)
     api.include_router(tasks.router)
     api.include_router(home.router)
+    api.include_router(ask.router)
+    api.include_router(learn.router)
+    api.include_router(insights.router)
+    api.include_router(workspaces.router)
+    api.include_router(calendar.router)
+    api.include_router(account.router)
     app.include_router(api)
     return app
 

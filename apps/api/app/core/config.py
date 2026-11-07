@@ -41,6 +41,21 @@ class Settings(BaseSettings):
     groq_whisper_model: str | None = None
     tavily_api_key: str | None = None
 
+    google_client_id: str | None = None
+    google_client_secret: str | None = None
+    google_redirect_uri: str | None = None
+    # Fernet key that encrypts stored OAuth tokens.
+    token_encryption_key: str | None = None
+    langfuse_public_key: str | None = None
+    langfuse_secret_key: str | None = None
+    langfuse_host: str = "https://cloud.langfuse.com"
+
+    cron_secret: str | None = None
+    upstash_redis_rest_url: str | None = None
+    upstash_redis_rest_token: str | None = None
+    daily_ai_usage_cap: int = 200
+    rate_limit_per_minute: int = 30
+
     worker_enabled: bool = True
     worker_concurrency: int = 2
     worker_poll_seconds: float = 2.0

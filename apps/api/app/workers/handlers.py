@@ -5,6 +5,12 @@ from uuid import UUID
 from sqlalchemy import select
 
 from app.agents.ingestion import IngestionDeps, build_ingestion_graph
+from app.agents.scheduled import (
+    run_adapt_tasks,
+    run_just_in_time_recall,
+    run_link_health,
+    run_weekly_insights,
+)
 from app.core.config import Settings
 from app.db.models import IntentSource, Save
 from app.db.session import service_session
@@ -12,6 +18,7 @@ from app.providers.registry import Providers
 from app.services.content import UnreadableSourceError
 from app.services.ingestion_store import SourceReader, SqlIngestionStore
 from app.services.storage import FileStore
+from app.services.tracing import traced_run
 from app.workers.queue import FailureHandler, Handler, Job, PermanentJobError
 
 
@@ -39,7 +46,8 @@ def build_handlers(
                 "intent": save.intent if save.intent_source == IntentSource.user else None,
             }
         try:
-            await graph.ainvoke(state)
+            async with traced_run("ingestion", settings, save_id):
+                await graph.ainvoke(state)
         except UnreadableSourceError as error:
             raise PermanentJobError(str(error)) from error
 
@@ -47,4 +55,22 @@ def build_handlers(
         if job.type == "ingest_save":
             await store.fail(UUID(job.payload["save_id"]), message)
 
-    return {"ingest_save": ingest_save}, on_final_failure
+    async def just_in_time_recall(job: Job) -> None:
+        await run_just_in_time_recall(providers)
+
+    async def adapt_tasks(job: Job) -> None:
+        await run_adapt_tasks(providers)
+
+    async def weekly_insights(job: Job) -> None:
+        await run_weekly_insights(providers)
+
+    async def link_health(job: Job) -> None:
+        await run_link_health()
+
+    return {
+        "ingest_save": ingest_save,
+        "just_in_time_recall": just_in_time_recall,
+        "adapt_tasks": adapt_tasks,
+        "weekly_insights": weekly_insights,
+        "link_health": link_health,
+    }, on_final_failure

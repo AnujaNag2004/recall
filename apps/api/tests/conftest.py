@@ -52,7 +52,7 @@ def settings(postgres: Any) -> Settings:
 
 @pytest.fixture
 async def app(settings: Settings, monkeypatch: pytest.MonkeyPatch) -> AsyncIterator[FastAPI]:
-    monkeypatch.setattr("app.db.session.get_settings", lambda: settings)
+    monkeypatch.setattr("app.db.engine.get_settings", lambda: settings)
     get_engine.cache_clear()
     application = create_app(settings)
     application.dependency_overrides[get_settings] = lambda: settings

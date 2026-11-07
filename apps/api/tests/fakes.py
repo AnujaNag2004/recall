@@ -1,6 +1,7 @@
 """Stand-ins for external AI services, so tests are fast and need no keys."""
 
 import json
+from collections.abc import AsyncIterator
 from typing import Any
 
 from app.providers.base import (
@@ -24,6 +25,20 @@ class FakeLLM:
                 "title": "Graphs explained",
                 "tldr": "A short tour of graph algorithms.",
                 "key_points": ["BFS finds shortest paths.", "DFS explores deeply."],
+            },
+            "Decide how to answer": {"route": "saves", "search_query": "graph algorithms"},
+            "Which of these passages": {"relevant": [1]},
+            "Check this answer": {"grounded": True, "unsupported_claims": []},
+            "Write 3 to 8 flashcards": {"cards": [{"front": "What is BFS?", "back": "A search."}]},
+            "Write a quiz": {
+                "questions": [
+                    {"question": "BFS uses?", "options": ["Queue", "Stack"], "answer_index": 0}
+                ]
+            },
+            "weekly digest": {"headline": "A week of graphs", "sections": []},
+            "weekly reflection": {
+                "insights": ["You act most on cooking."],
+                "challenge": None,
             },
             "List every specific": {"entities": []},
             "Extract ": {"actions": [{"title": "Solve one graph problem"}]},
@@ -51,6 +66,14 @@ class FakeLLM:
             if key in prompt:
                 return value if isinstance(value, str) else json.dumps(value)
         return "{}" if json_mode else "ok"
+
+    async def stream(
+        self, prompt: str, *, system: str | None = None, tier: ModelTier = ModelTier.STRONG
+    ) -> AsyncIterator[str]:
+        self.prompts.append(prompt)
+        answer = str(self.answers.get("__answer__", "BFS finds shortest paths [1]."))
+        for word in answer.split(" "):
+            yield f"{word} "
 
     async def describe_media(self, data: bytes, mime_type: str, prompt: str) -> str:
         return "A photo of a whiteboard listing graph algorithms and their running times."

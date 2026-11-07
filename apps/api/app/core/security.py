@@ -9,20 +9,26 @@ that one algorithm. So a forged HS256 token can't be "signed" with the public ke
 which is the classic JWT algorithm-confusion attack.
 """
 
+import hashlib
+import secrets
 from dataclasses import dataclass
 from functools import lru_cache
 from typing import Annotated, Any
 from uuid import UUID
 
 import jwt
+from cryptography.fernet import Fernet, InvalidToken
 from fastapi import Depends, HTTPException, status
 from fastapi.concurrency import run_in_threadpool
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from sqlalchemy import text
 
 from app.core.config import Settings, get_settings
+from app.db.engine import get_engine
 
 ASYMMETRIC_ALGORITHMS = {"ES256", "RS256"}
 AUDIENCE = "authenticated"
+API_KEY_PREFIX = "rk_"
 
 bearer_scheme = HTTPBearer(auto_error=False)
 
@@ -92,6 +98,49 @@ def get_token_verifier() -> TokenVerifier:
     return TokenVerifier(get_settings())
 
 
+def generate_api_key() -> str:
+    return f"{API_KEY_PREFIX}{secrets.token_urlsafe(32)}"
+
+
+def hash_api_key(key: str) -> str:
+    """Only this is stored, so a database leak doesn't hand out working keys."""
+    return hashlib.sha256(key.encode()).hexdigest()
+
+
+async def _user_from_api_key(key: str) -> CurrentUser | None:
+    """For the MCP server and other tools. Acts as the user, under the same RLS."""
+    async with get_engine().begin() as connection:
+        row = (
+            await connection.execute(
+                text(
+                    """
+                    update public.api_keys set last_used_at = now()
+                    where hashed_key = :hash returning user_id
+                    """
+                ),
+                {"hash": hash_api_key(key)},
+            )
+        ).first()
+    return CurrentUser(id=row.user_id, email=None) if row else None
+
+
+def _fernet(settings: Settings) -> Fernet:
+    if not settings.token_encryption_key:
+        raise AuthUnavailableError("TOKEN_ENCRYPTION_KEY is not set")
+    return Fernet(settings.token_encryption_key)
+
+
+def encrypt_secret(value: str, settings: Settings) -> str:
+    return _fernet(settings).encrypt(value.encode()).decode()
+
+
+def decrypt_secret(value: str, settings: Settings) -> str:
+    try:
+        return _fernet(settings).decrypt(value.encode()).decode()
+    except InvalidToken as error:
+        raise AuthUnavailableError("A stored token couldn't be decrypted") from error
+
+
 async def get_current_user(
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)],
     verifier: Annotated[TokenVerifier, Depends(get_token_verifier)],
@@ -103,6 +152,11 @@ async def get_current_user(
     )
     if credentials is None:
         raise unauthorized
+    if credentials.credentials.startswith(API_KEY_PREFIX):
+        user = await _user_from_api_key(credentials.credentials)
+        if user is None:
+            raise unauthorized
+        return user
     try:
         # Off the event loop: fetching signing keys is blocking network I/O.
         return await run_in_threadpool(verifier.verify, credentials.credentials)
