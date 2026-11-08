@@ -14,6 +14,7 @@ from uuid import uuid4
 
 from sqlalchemy import text
 
+from app.core.config import get_settings
 from app.db.session import service_session
 
 random.seed(7)
@@ -277,7 +278,9 @@ async def seed_workspace(session, workspace_id, user_id, items):
 
 
 async def main():
-    email = os.environ["DEMO_EMAIL"]
+    email = os.environ.get("DEMO_EMAIL") or get_settings().demo_email
+    if not email:
+        raise SystemExit("Add DEMO_EMAIL to .env first.")
     async with service_session() as session:
         user_id = await session.scalar(
             text("select id from auth.users where lower(email) = lower(:e)"), {"e": email}
