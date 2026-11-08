@@ -86,7 +86,16 @@ Steps after `chunk_and_embed` are optional: if a service is having a bad day, yo
 
 ## Evals
 
-`make eval` measures classification, link accuracy, action extraction and RAG faithfulness on labeled data in [apps/api/evals](apps/api/evals/), using the real providers. Results are written to `apps/api/evals/results.md` only by that script, so if the file isn't there, the evals haven't been run yet.
+`make eval` measures classification, link accuracy, action extraction and RAG faithfulness on labeled data in [apps/api/evals](apps/api/evals/), using the real providers. The script writes [results.md](apps/api/evals/results.md); these numbers are copied from its latest run (8 November 2026, Gemini Flash, no provider errors).
+
+| Metric | Result | Items |
+|---|---|---|
+| Classification accuracy (life, study, work) | 93% | 30 |
+| Action extraction | 97% precision, 89% recall | 12 |
+| RAG faithfulness, judged by a model | 100%, with 100% answer relevance | 12 |
+| Entity to official link | 53% | 30 |
+
+The datasets are small, so treat these as indicative. Link accuracy is the weakest: a link only counts when it's verified and on the expected domain, and the verifier would rather show no link than a wrong one.
 
 ## Run it locally
 
