@@ -12,6 +12,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings, get_settings
+from app.core.demo import forbid_demo
 from app.core.limits import usage_today
 from app.core.permissions import require_role
 from app.core.security import CurrentUser, generate_api_key, get_current_user, hash_api_key
@@ -68,7 +69,7 @@ class AgentRunOut(BaseModel):
     created_at: datetime
 
 
-@router.patch("/me", status_code=status.HTTP_204_NO_CONTENT)
+@router.patch("/me", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(forbid_demo)])
 async def update_profile(body: ProfileUpdate, user: User, session: Session) -> None:
     fields = body.model_dump(exclude_unset=True, exclude_none=True)
     if not fields:
@@ -103,7 +104,7 @@ async def list_api_keys(user: User) -> list[ApiKeyOut]:
     return [ApiKeyOut(**dict(row._mapping)) for row in rows]
 
 
-@router.post("/api-keys", status_code=status.HTTP_201_CREATED)
+@router.post("/api-keys", status_code=status.HTTP_201_CREATED, dependencies=[Depends(forbid_demo)])
 async def create_api_key(body: ApiKeyCreate, user: User) -> ApiKeyCreated:
     key = generate_api_key()
     async with service_session() as session:
@@ -200,7 +201,7 @@ async def delete_auth_user(supabase_url: str, key: str, user_id: UUID) -> bool:
     return response.status_code < 400
 
 
-@router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/me", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(forbid_demo)])
 async def delete_account(
     body: DeleteAccount,
     user: User,

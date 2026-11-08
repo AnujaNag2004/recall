@@ -190,6 +190,7 @@ make seed
 ```
 
 - [ ] On Vercel, add `DEMO_EMAIL` and `DEMO_PASSWORD`, without a `NEXT_PUBLIC_` prefix, and redeploy. The demo button then appears.
+- [ ] On Render, add the same `DEMO_EMAIL` and `DEMO_PASSWORD`. The API then blocks the demo account from changing its profile, password, API keys, teams, Google connection or uploads, and the hourly job resets its password in case a visitor changes it.
 
 Seeded chunks have no embeddings, so in the demo, Ask finds them through full-text search only.
 

@@ -337,3 +337,30 @@ async def test_agent_runs_are_recorded_for_admins_only(
     assert runs.json()[0]["status"] == "succeeded"
     denied = await client.get(f"/api/v1/workspaces/{team}/agent-runs", headers=auth_header(member))
     assert denied.status_code == 403
+
+
+async def test_the_demo_account_cannot_change_itself_but_can_use_the_app(
+    app: FastAPI, client: AsyncClient, postgres: Any
+) -> None:
+    settings = app.dependency_overrides[get_settings]()
+    with_demo = settings.model_copy(update={"demo_email": "Demo@Example.com"})
+    app.dependency_overrides[get_settings] = lambda: with_demo
+    demo = auth_header(create_user(postgres), email="demo@example.com")
+    blocked = [
+        ("PATCH", "/api/v1/me", {"name": "Taken over"}),
+        ("POST", "/api/v1/api-keys", {"label": "mine"}),
+        ("DELETE", "/api/v1/me", {"confirm": "delete my account"}),
+        ("POST", "/api/v1/workspaces", {"name": "Team"}),
+        ("POST", "/api/v1/integrations/google/connect", None),
+    ]
+    for method, path, body in blocked:
+        response = await client.request(method, path, headers=demo, json=body)
+        assert response.status_code == 403, path
+        assert response.json()["detail"] == "Not available in the demo account"
+    # Trying the product itself still works.
+    await create_note(client, (await personal_workspace(client, demo), demo))
+    # Everyone else is unaffected.
+    other = auth_header(create_user(postgres))
+    assert (
+        await client.post("/api/v1/api-keys", headers=other, json={"label": "k"})
+    ).status_code == 201

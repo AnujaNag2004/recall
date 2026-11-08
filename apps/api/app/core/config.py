@@ -51,6 +51,10 @@ class Settings(BaseSettings):
     langfuse_host: str = "https://cloud.langfuse.com"
 
     cron_secret: str | None = None
+    # The shared demo login. Its account can't change settings, keys or sign-in, and the
+    # hourly job resets its password, so one visitor can't lock out the next.
+    demo_email: str | None = None
+    demo_password: str | None = None
     upstash_redis_rest_url: str | None = None
     upstash_redis_rest_token: str | None = None
     daily_ai_usage_cap: int = 200

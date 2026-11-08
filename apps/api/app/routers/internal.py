@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from sqlalchemy import text
 
 from app.core.config import Settings, get_settings
+from app.core.demo import reset_demo_password
 from app.db.session import service_session
 
 router = APIRouter(prefix="/internal", tags=["internal"], include_in_schema=False)
@@ -37,11 +38,15 @@ def verify_cron_secret(
     status_code=status.HTTP_202_ACCEPTED,
     dependencies=[Depends(verify_cron_secret)],
 )
-async def trigger_cron(job: str) -> EnqueuedOut:
+async def trigger_cron(
+    job: str, settings: Annotated[Settings, Depends(get_settings)]
+) -> EnqueuedOut:
     """Only queues the work: a slow job must not keep the scheduler's request open."""
     types = CRON_JOBS.get(job)
     if types is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Unknown job")
+    if job == "hourly":
+        await reset_demo_password(settings)
     async with service_session() as session:
         for job_type in types:
             # Skipped if one is still pending, so a backlog can't pile up.

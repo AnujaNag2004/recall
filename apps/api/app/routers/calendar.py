@@ -14,6 +14,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings, get_settings
+from app.core.demo import forbid_demo
 from app.core.permissions import require_role
 from app.core.security import CurrentUser, decrypt_secret, encrypt_secret, get_current_user
 from app.db.models import WorkspaceMember, WorkspaceRole
@@ -183,7 +184,7 @@ async def google_status(user: User, settings: Config) -> GoogleStatus:
     return GoogleStatus(configured=_google_ready(settings), connected=bool(found))
 
 
-@router.post("/integrations/google/connect")
+@router.post("/integrations/google/connect", dependencies=[Depends(forbid_demo)])
 async def google_connect(user: User, settings: Config) -> ConnectOut:
     if not _google_ready(settings):
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Google isn't configured")
@@ -413,7 +414,11 @@ async def add_task_to_google(
     return SyncOut(synced=1)
 
 
-@router.delete("/integrations/google", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/integrations/google",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(forbid_demo)],
+)
 async def google_disconnect(user: User) -> None:
     async with service_session() as session:
         await session.execute(

@@ -11,6 +11,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agents.scheduled import Briefing
+from app.core.demo import forbid_demo
 from app.core.limits import enforce_ai_limits
 from app.core.permissions import require_role
 from app.core.security import CurrentUser, get_current_user
@@ -87,7 +88,9 @@ class PrepOut(BaseModel):
     saves: list[PrepSave]
 
 
-@router.post("/workspaces", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/workspaces", status_code=status.HTTP_201_CREATED, dependencies=[Depends(forbid_demo)]
+)
 async def create_workspace(body: WorkspaceCreate, user: User, session: Session) -> WorkspaceRef:
     row = (
         await session.execute(
@@ -178,7 +181,11 @@ async def remove_member(
         raise HTTPException(status.HTTP_403_FORBIDDEN, "That member can't be removed")
 
 
-@router.post("/workspaces/{workspace_id}/invites", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/workspaces/{workspace_id}/invites",
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(forbid_demo)],
+)
 async def create_invite(
     workspace_id: UUID, body: InviteCreate, admin: Admin, session: Session
 ) -> InviteOut:
@@ -230,7 +237,7 @@ async def revoke_invite(
     )
 
 
-@router.post("/invites/{token}/accept")
+@router.post("/invites/{token}/accept", dependencies=[Depends(forbid_demo)])
 async def accept_invite(token: str, user: User) -> WorkspaceRef:
     """The accepter isn't a member yet, so RLS would hide the invite: this needs service
     access. The token and the email together are what authorize it."""
