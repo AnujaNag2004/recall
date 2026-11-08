@@ -4,7 +4,15 @@
 
 > Everyone saves hundreds of posts, videos and docs but almost never acts on them. Recall is a multi-agent AI system that turns saved content into context-aware micro-actions, surfaces the right save at the right moment, and tracks whether your saves actually change your behavior.
 
-**Live site:** [recall-beta-five.vercel.app](https://recall-beta-five.vercel.app). Sign up with email or Google. The API runs on a free server that sleeps when idle, so the first request can take about a minute.
+**Live site:** [recall-beta-five.vercel.app](https://recall-beta-five.vercel.app). Click **Try the live demo** to look around a sample account without signing up, or sign up with email or Google. The API runs on a free server that sleeps when idle, so the first request can take about a minute.
+
+![Recall landing page](docs/screenshots/landing.png)
+
+| Home | Insights |
+|---|---|
+| ![Home: recent saves, Save-to-Action score and cards to review](docs/screenshots/home.png) | ![Insights: score, intent breakdown and trend over time](docs/screenshots/insights.png) |
+| **Smart Card** | **Ask Your Brain** |
+| ![A Smart Card with its accepted action](docs/screenshots/smart-card.png) | ![An answer with citations to saved sources](docs/screenshots/ask.png) |
 
 ## The idea: the Save-to-Action Engine
 

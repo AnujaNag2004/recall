@@ -2,36 +2,12 @@
 
 import { CircleAlert, Loader2, Send } from "lucide-react";
 import Link from "next/link";
-import { type FormEvent, Fragment, type ReactNode, useEffect, useRef, useState } from "react";
+import { type FormEvent, type ReactNode, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { formatTimestamp } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { AnswerText } from "./answer-text";
 import type { ChatMessage, SourceRef } from "./use-ask";
-
-/** Turns [1] markers into chips. The answer is rendered as text, never as HTML. */
-function withCitations(
-  content: string,
-  sources: SourceRef[] | undefined,
-  onOpen: (source: SourceRef) => void,
-): ReactNode {
-  return content.split(/(\[\d{1,2}\])/g).map((part, index) => {
-    const match = part.match(/^\[(\d{1,2})\]$/);
-    const source = match && sources?.find((s) => s.number === Number(match[1]));
-    if (!source) return <Fragment key={index}>{part}</Fragment>;
-    return (
-      <button
-        key={index}
-        type="button"
-        title={source.title}
-        aria-label={`Source ${source.number}: ${source.title}`}
-        onClick={() => onOpen(source)}
-        className="mx-0.5 inline-flex size-5 items-center justify-center rounded-md bg-primary/10 align-text-top text-[11px] font-medium text-primary hover:bg-primary/20"
-      >
-        {source.number}
-      </button>
-    );
-  });
-}
 
 function SourceLink({
   source,
@@ -120,9 +96,11 @@ export function ChatThread({
                   {message.content}
                 </p>
               ) : (
-                <div className="whitespace-pre-wrap">
-                  {withCitations(message.content, message.sources ?? message.citations, setOpenSource)}
-                </div>
+                <AnswerText
+                  content={message.content}
+                  sources={message.sources ?? message.citations}
+                  onOpen={setOpenSource}
+                />
               )}
               {message.grounded === false && (
                 <p className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
